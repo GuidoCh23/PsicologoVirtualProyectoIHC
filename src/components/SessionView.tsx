@@ -61,12 +61,60 @@ export function SessionView({ session, onEndSession }: SessionViewProps) {
 
   const speak = (text: string) => {
     if ('speechSynthesis' in window) {
+      // Cancel any ongoing speech
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'es-ES';
-      utterance.rate = 0.9;
-      utterance.pitch = 1;
-      window.speechSynthesis.speak(utterance);
+
+      // Split long text into chunks to avoid browser limitations
+      const maxLength = 200; // Maximum characters per chunk
+      const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+      let chunks: string[] = [];
+
+      let currentChunk = '';
+      for (const sentence of sentences) {
+        if ((currentChunk + sentence).length > maxLength && currentChunk.length > 0) {
+          chunks.push(currentChunk.trim());
+          currentChunk = sentence;
+        } else {
+          currentChunk += sentence;
+        }
+      }
+      if (currentChunk.length > 0) {
+        chunks.push(currentChunk.trim());
+      }
+
+      // If no sentences were found, split by length
+      if (chunks.length === 0) {
+        for (let i = 0; i < text.length; i += maxLength) {
+          chunks.push(text.substring(i, i + maxLength));
+        }
+      }
+
+      // Speak each chunk sequentially
+      let currentIndex = 0;
+      const speakChunk = () => {
+        if (currentIndex >= chunks.length) return;
+
+        const utterance = new SpeechSynthesisUtterance(chunks[currentIndex]);
+        utterance.lang = 'es-ES';
+        utterance.rate = 0.9;
+        utterance.pitch = 1;
+
+        utterance.onend = () => {
+          currentIndex++;
+          if (currentIndex < chunks.length) {
+            // Small pause between chunks
+            setTimeout(speakChunk, 100);
+          }
+        };
+
+        utterance.onerror = (event) => {
+          console.error('Speech synthesis error:', event);
+        };
+
+        window.speechSynthesis.speak(utterance);
+      };
+
+      speakChunk();
     }
   };
 
