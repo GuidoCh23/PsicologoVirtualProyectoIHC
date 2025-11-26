@@ -55,10 +55,10 @@ export function SettingsView({ onClearAllData }: SettingsViewProps) {
             <div className="p-4 bg-blue-50 rounded-lg">
               <div className="flex items-center gap-3 mb-2">
                 <Lock className="w-5 h-5 text-blue-600" />
-                <p>Almacenamiento local</p>
+                <p>Almacenamiento Seguro</p>
               </div>
               <p className="text-sm text-gray-600">
-                Todos tus datos se guardan únicamente en tu dispositivo. No se envían a ningún servidor externo.
+                Tus conversaciones están guardadas de forma segura en nuestros servidores y protegidas mediante tokens cifrados.
               </p>
             </div>
           </div>
