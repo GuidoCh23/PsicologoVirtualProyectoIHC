@@ -3,7 +3,7 @@ import { Session } from '../types';
 import { Mic, Square, Volume2 } from 'lucide-react';
 import { CrisisModal } from './CrisisModal';
 import { BreathingExercise } from './BreathingExercise';
-import { AIService, detectBreathingExerciseSuggestion, detectCrisis } from '../services/aiService';
+import { AIService, detectBreathingExerciseSuggestion, detectCrisis, detectSessionEnd } from '../services/aiService';
 
 interface SessionViewProps {
   session: Session;
@@ -23,8 +23,10 @@ export function SessionView({ session, onEndSession }: SessionViewProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [currentMessage, setCurrentMessage] = useState('');
+  const [shouldEndSession, setShouldEndSession] = useState(false);
   const recognitionRef = useRef<any>(null);
   const aiServiceRef = useRef<AIService | null>(null);
+  const prevIsSpeakingRef = useRef<boolean>(false);
 
   useEffect(() => {
     // Initialize AI Service (already configured with hardcoded key)
@@ -62,10 +64,75 @@ export function SessionView({ session, onEndSession }: SessionViewProps) {
     return () => clearInterval(interval);
   }, []);
 
+  // Auto-end session when assistant finishes speaking farewell
+  useEffect(() => {
+    // Only trigger when isSpeaking changes from true to false
+    const wasSpeaking = prevIsSpeakingRef.current;
+    const justFinishedSpeaking = wasSpeaking && !isSpeaking;
+
+    // Update the ref for next render
+    prevIsSpeakingRef.current = isSpeaking;
+
+    if (justFinishedSpeaking && shouldEndSession) {
+      // Wait a bit for the user to process the complete message
+      const timeout = setTimeout(() => {
+        handleEndSession();
+      }, 1500);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isSpeaking, shouldEndSession]);
+
+  // Function to clean text before speaking - removes analysis and task markers
+  const cleanTextForSpeech = (text: string): string => {
+    let cleanedText = text;
+
+    // Remove everything from "Resumiendo" onwards (session ending summary)
+    const summaryKeywords = [
+      'Resumiendo',
+      'En resumen',
+      'Para resumir',
+      'Resumo nuestra',
+      'Resumen de'
+    ];
+
+    for (const keyword of summaryKeywords) {
+      const index = cleanedText.indexOf(keyword);
+      if (index !== -1) {
+        cleanedText = cleanedText.substring(0, index).trim();
+        break;
+      }
+    }
+
+    // Remove everything between [ANALISIS_INICIO] and [ANALISIS_FIN]
+    cleanedText = cleanedText.replace(/\[ANALISIS_INICIO\][\s\S]*?\[ANALISIS_FIN\]/g, '');
+
+    // Remove everything between [TAREA_INICIO] and [TAREA_FIN] (multiple occurrences)
+    cleanedText = cleanedText.replace(/\[TAREA_INICIO\][\s\S]*?\[TAREA_FIN\]/g, '');
+
+    // Remove any remaining markers if they appear without closing tags
+    cleanedText = cleanedText.replace(/\[ANALISIS_INICIO\][\s\S]*/g, '');
+    cleanedText = cleanedText.replace(/\[TAREA_INICIO\][\s\S]*/g, '');
+
+    // Clean up any extra whitespace or newlines left behind
+    cleanedText = cleanedText.replace(/\n{3,}/g, '\n\n').trim();
+
+    return cleanedText;
+  };
+
   const speak = (text: string) => {
     if ('speechSynthesis' in window) {
       // Cancel any ongoing speech
       window.speechSynthesis.cancel();
+
+      // Clean text before speaking (remove analysis and task markers)
+      const cleanedText = cleanTextForSpeech(text);
+
+      // If there's nothing left to speak after cleaning, just finish
+      if (!cleanedText.trim()) {
+        setIsSpeaking(false);
+        return;
+      }
 
       setIsSpeaking(true);
 
@@ -74,7 +141,7 @@ export function SessionView({ session, onEndSession }: SessionViewProps) {
       const chunks: string[] = [];
 
       // Try to split by sentences first
-      const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+      const sentences = cleanedText.match(/[^.!?]+[.!?]+/g) || [cleanedText];
 
       for (const sentence of sentences) {
         if (sentence.length <= maxLength) {
@@ -298,22 +365,32 @@ export function SessionView({ session, onEndSession }: SessionViewProps) {
       return;
     }
 
+    // Check if user wants to end session
+    const userWantsToEnd = detectSessionEnd(userText);
+    if (userWantsToEnd) {
+      setShouldEndSession(true);
+    }
+
     setIsProcessing(true);
 
     try {
       // Use AI Service to generate response
       const response = await aiServiceRef.current!.sendMessage(userText);
 
+      // Clean the response text to remove analysis and task markers for display
+      const cleanedResponse = cleanTextForSpeech(response);
+
+      // Add cleaned message to display (without analysis/tasks markers)
       setMessages(prev => [...prev, {
         role: 'assistant',
-        text: response
+        text: cleanedResponse
       }]);
 
-      setCurrentMessage(response);
-      speak(response);
+      setCurrentMessage(cleanedResponse);
+      speak(response); // speak() already cleans internally
 
-      // Check if AI suggested breathing exercise
-      if (detectBreathingExerciseSuggestion(response)) {
+      // Check if AI suggested breathing exercise (only if not ending session)
+      if (!userWantsToEnd && detectBreathingExerciseSuggestion(response)) {
         setTimeout(() => {
           setShowBreathing(true);
         }, 3000);
@@ -459,7 +536,7 @@ export function SessionView({ session, onEndSession }: SessionViewProps) {
     return null;
   };
 
-  const handleEndSession = () => {
+  const handleEndSession = async () => {
     if (recognitionRef.current) {
       recognitionRef.current.stop();
     }
@@ -468,10 +545,89 @@ export function SessionView({ session, onEndSession }: SessionViewProps) {
     }
 
     // Extraer tareas del mensaje de la IA
-    const extractedTasks = extractTasksFromMessages();
+    let extractedTasks = extractTasksFromMessages();
 
     // Extraer análisis emocional del mensaje de la IA
-    const extractedAnalysis = extractEmotionalAnalysis();
+    let extractedAnalysis = extractEmotionalAnalysis();
+
+    // Si no hay tareas ni análisis (sesión terminada manualmente), pedirle al AI que los genere
+    if ((!extractedTasks || extractedTasks.length === 0) && !extractedAnalysis && messages.length > 0) {
+      try {
+        setIsProcessing(true);
+
+        // Enviar mensaje al AI pidiendo análisis y tareas basadas en la conversación
+        const endingPrompt = "El usuario ha terminado la sesión. Por favor genera el análisis emocional y las 3 tareas basándote en nuestra conversación.";
+        const response = await aiServiceRef.current!.sendMessage(endingPrompt);
+
+        // Intentar extraer tareas y análisis de la nueva respuesta
+        const tempMessages = [...messages, { role: 'assistant' as const, text: response }];
+
+        // Extraer del último mensaje
+        const lastMessage = tempMessages[tempMessages.length - 1];
+        if (lastMessage.role === 'assistant') {
+          // Extraer tareas
+          const taskMatches = lastMessage.text.matchAll(/\[TAREA_INICIO\]([\s\S]*?)\[TAREA_FIN\]/g);
+          const tasks = [];
+          for (const match of taskMatches) {
+            const taskContent = match[1];
+            const tituloMatch = taskContent.match(/Titulo:\s*(.+)/);
+            const descripcionMatch = taskContent.match(/Descripcion:\s*(.+)/);
+            const frecuenciaMatch = taskContent.match(/Frecuencia:\s*(.+)/);
+            const puntosMatch = taskContent.match(/Puntos:\s*(\d+)/);
+
+            if (tituloMatch && descripcionMatch && puntosMatch) {
+              tasks.push({
+                titulo: tituloMatch[1].trim(),
+                descripcion: descripcionMatch[1].trim(),
+                frecuencia: frecuenciaMatch ? frecuenciaMatch[1].trim() : 'única',
+                puntos: parseInt(puntosMatch[1])
+              });
+            }
+          }
+
+          if (tasks.length > 0) {
+            extractedTasks = tasks;
+          }
+
+          // Extraer análisis emocional
+          const analisisMatch = lastMessage.text.match(/\[ANALISIS_INICIO\]([\s\S]*?)\[ANALISIS_FIN\]/);
+          if (analisisMatch) {
+            const analisisContent = analisisMatch[1];
+            const emocionMatch = analisisContent.match(/Emocion_Predominante:\s*(.+)/);
+            const intensidadMatch = analisisContent.match(/Intensidad:\s*(\d+)/);
+            const evolucionMatch = analisisContent.match(/Evolucion:\s*(.+)/);
+            const topEmocionesMatch = analisisContent.match(/Top_Emociones:\s*(.+)/);
+
+            if (emocionMatch && intensidadMatch && evolucionMatch && topEmocionesMatch) {
+              const topEmocionesStr = topEmocionesMatch[1];
+              const emocionesParts = topEmocionesStr.split(',').map(e => e.trim());
+              const topEmociones = emocionesParts.map(part => {
+                const [emocion, porcentaje] = part.split(':').map(s => s.trim());
+                return {
+                  emocion: emocion,
+                  porcentaje: parseInt(porcentaje) || 0
+                };
+              });
+
+              const evolucion = evolucionMatch[1].trim();
+              const evolucionValid = evolucion === 'mejoró' || evolucion === 'empeoró' ? evolucion : 'se mantuvo';
+
+              extractedAnalysis = {
+                emocion_predominante: emocionMatch[1].trim(),
+                intensidad_promedio: parseInt(intensidadMatch[1]),
+                evolucion: evolucionValid as 'mejoró' | 'empeoró' | 'se mantuvo',
+                top_4_emociones: topEmociones.slice(0, 4)
+              };
+            }
+          }
+        }
+
+        setIsProcessing(false);
+      } catch (error) {
+        console.error('Error al generar análisis final:', error);
+        setIsProcessing(false);
+      }
+    }
 
     // Si no se pudieron extraer tareas, usar tareas por defecto
     const defaultTasks = [

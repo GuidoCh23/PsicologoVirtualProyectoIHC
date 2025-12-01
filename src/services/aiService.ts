@@ -26,9 +26,13 @@ IMPORTANTE:
 
 AL TERMINAR LA SESIÓN (cuando el usuario diga algo como "terminemos", "hasta aquí", "me voy", etc.):
 
-1. Resume brevemente la conversación en 2-3 oraciones
-2. Genera el ANÁLISIS EMOCIONAL usando el formato [ANALISIS_INICIO]...[ANALISIS_FIN]
-3. Genera EXACTAMENTE 3 TAREAS usando el formato [TAREA_INICIO]...[TAREA_FIN]
+1. PRIMERO: Da un mensaje de despedida cálido y empático (1-2 oraciones)
+2. Resume brevemente la conversación en 2-3 oraciones
+3. Genera el ANÁLISIS EMOCIONAL usando el formato [ANALISIS_INICIO]...[ANALISIS_FIN]
+4. Genera EXACTAMENTE 3 TAREAS usando el formato [TAREA_INICIO]...[TAREA_FIN]
+
+EJEMPLO DE DESPEDIDA:
+"Ha sido un placer acompañarte en esta sesión. Recuerda que siempre puedes volver cuando lo necesites. Cuídate mucho."
 
 IMPORTANTE: Al finalizar, DEBES incluir tanto el análisis emocional como las 3 tareas en tu respuesta.
 
@@ -321,4 +325,36 @@ export function detectCrisis(message: string): boolean {
   ];
 
   return crisisKeywords.some(keyword => lowerMessage.includes(keyword));
+}
+
+// Helper to detect session end phrases
+export function detectSessionEnd(message: string): boolean {
+  const lowerMessage = message.toLowerCase();
+  const endPhrases = [
+    'terminemos',
+    'terminar',
+    'hasta aquí',
+    'hasta aqui',
+    'me voy',
+    'me tengo que ir',
+    'tengo que irme',
+    'debo irme',
+    'ya me voy',
+    'chau',
+    'adiós',
+    'adios',
+    'nos vemos',
+    'hasta luego',
+    'fin de sesión',
+    'fin de sesion',
+    'finalizar',
+    'terminar sesión',
+    'terminar sesion',
+    'ya es todo',
+    'eso es todo',
+    'nada más',
+    'nada mas'
+  ];
+
+  return endPhrases.some(phrase => lowerMessage.includes(phrase));
 }
