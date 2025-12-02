@@ -4,6 +4,7 @@ import { Mic, Square, Volume2 } from 'lucide-react';
 import { CrisisModal } from './CrisisModal';
 import { BreathingExercise } from './BreathingExercise';
 import { AIService, detectBreathingExerciseSuggestion, detectCrisis, detectSessionEnd } from '../services/aiService';
+import { useTranslation } from '../TranslationContext';
 
 interface SessionViewProps {
   session: Session;
@@ -11,6 +12,7 @@ interface SessionViewProps {
 }
 
 export function SessionView({ session, onEndSession }: SessionViewProps) {
+  const { t, language } = useTranslation();
   const [isListening, setIsListening] = useState(false);
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant', text: string }>>([]);
   const [sessionDuration, setSessionDuration] = useState(0);
@@ -762,16 +764,16 @@ export function SessionView({ session, onEndSession }: SessionViewProps) {
       <div className="relative z-10 p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold">Sesión en Curso</h1>
+            <h1 className="text-xl font-semibold">{language === 'es' ? 'Sesión en Curso' : 'Session in Progress'}</h1>
             <p className="text-sm opacity-80 mt-1">
-              ⏱ {sessionDuration} {sessionDuration === 1 ? 'minuto' : 'minutos'}
+              ⏱ {sessionDuration} {sessionDuration === 1 ? (language === 'es' ? 'minuto' : 'minute') : (language === 'es' ? 'minutos' : 'minutes')}
             </p>
           </div>
           <button
             onClick={handleEndSession}
             className="px-5 py-2.5 bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/30 transition-all font-medium"
           >
-            Terminar
+            {language === 'es' ? 'Terminar' : 'End'}
           </button>
         </div>
       </div>
@@ -823,13 +825,13 @@ export function SessionView({ session, onEndSession }: SessionViewProps) {
         {/* Status text */}
         <div className="text-center space-y-3 max-w-2xl px-6">
           {isProcessing ? (
-            <p className="text-white text-lg font-medium animate-pulse">Pensando...</p>
+            <p className="text-white text-lg font-medium animate-pulse">{t.session.processing}</p>
           ) : isListening ? (
-            <p className="text-white text-lg font-medium">Escuchando...</p>
+            <p className="text-white text-lg font-medium">{t.session.listening}</p>
           ) : isSpeaking ? (
-            <p className="text-white text-lg font-medium">Hablando...</p>
+            <p className="text-white text-lg font-medium">{language === 'es' ? 'Hablando...' : 'Speaking...'}</p>
           ) : (
-            <p className="text-white text-lg font-medium">Toca el botón para hablar</p>
+            <p className="text-white text-lg font-medium">{language === 'es' ? 'Toca el botón para hablar' : 'Tap the button to speak'}</p>
           )}
 
           {/* Current message display */}
@@ -850,7 +852,7 @@ export function SessionView({ session, onEndSession }: SessionViewProps) {
             className="w-full py-5 rounded-2xl flex items-center justify-center gap-3 font-semibold text-lg transition-all transform bg-red-500 text-white hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] shadow-xl hover:bg-red-600"
           >
             <Square className="w-6 h-6" />
-            <span>Detener</span>
+            <span>{language === 'es' ? 'Detener' : 'Stop'}</span>
           </button>
         ) : (
           <button
@@ -865,17 +867,17 @@ export function SessionView({ session, onEndSession }: SessionViewProps) {
             {isSpeaking ? (
               <>
                 <Volume2 className="w-6 h-6" />
-                <span>Hablando...</span>
+                <span>{language === 'es' ? 'Hablando...' : 'Speaking...'}</span>
               </>
             ) : isProcessing ? (
               <>
                 <Volume2 className="w-6 h-6 animate-pulse" />
-                <span>Pensando...</span>
+                <span>{t.session.processing}</span>
               </>
             ) : (
               <>
                 <Mic className="w-6 h-6" />
-                <span>Presiona para hablar</span>
+                <span>{language === 'es' ? 'Presiona para hablar' : 'Press to speak'}</span>
               </>
             )}
           </button>
@@ -889,7 +891,7 @@ export function SessionView({ session, onEndSession }: SessionViewProps) {
                 type="text"
                 value={textInput}
                 onChange={(e) => setTextInput(e.target.value)}
-                placeholder="Escribe tu mensaje aquí..."
+                placeholder={t.session.typeMessage}
                 className="flex-1 py-4 px-5 rounded-2xl bg-white/90 backdrop-blur-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white font-medium"
                 disabled={isProcessing || isSpeaking}
               />
@@ -898,7 +900,7 @@ export function SessionView({ session, onEndSession }: SessionViewProps) {
                 disabled={isProcessing || isSpeaking || !textInput.trim()}
                 className="px-6 py-4 rounded-2xl bg-white text-purple-700 font-semibold hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Enviar
+                {t.session.send}
               </button>
             </div>
           </form>

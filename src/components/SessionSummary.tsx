@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Session } from '../types';
 import { Headphones, FileText, Trash2, Calendar, Clock, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { useTranslation } from '../TranslationContext';
 
 interface SessionSummaryProps {
   session: Session;
@@ -9,14 +10,15 @@ interface SessionSummaryProps {
 }
 
 const emotionEmojis = [
-  { emoji: '😔', label: 'triste' },
-  { emoji: '😟', label: 'preocupado' },
-  { emoji: '😐', label: 'neutral' },
-  { emoji: '🙂', label: 'tranquilo' },
-  { emoji: '😊', label: 'feliz' }
+  { emoji: '😔', label: 'triste', labelEn: 'sad' },
+  { emoji: '😟', label: 'preocupado', labelEn: 'worried' },
+  { emoji: '😐', label: 'neutral', labelEn: 'neutral' },
+  { emoji: '🙂', label: 'tranquilo', labelEn: 'calm' },
+  { emoji: '😊', label: 'feliz', labelEn: 'happy' }
 ];
 
 export function SessionSummary({ session, onSave, onDelete }: SessionSummaryProps) {
+  const { t, language } = useTranslation();
   const [selectedEmoji, setSelectedEmoji] = useState('');
   const [rating, setRating] = useState(0);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -46,9 +48,10 @@ export function SessionSummary({ session, onSave, onDelete }: SessionSummaryProp
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('es-ES', { 
-      day: 'numeric', 
-      month: 'short', 
+    const locale = language === 'es' ? 'es-ES' : 'en-US';
+    return date.toLocaleDateString(locale, {
+      day: 'numeric',
+      month: 'short',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
@@ -65,7 +68,7 @@ export function SessionSummary({ session, onSave, onDelete }: SessionSummaryProp
 
   const handlePlayConversation = () => {
     if (!session?.conversacion || session.conversacion.length === 0) {
-      alert('No hay conversación disponible para esta sesión');
+      alert(language === 'es' ? 'No hay conversación disponible para esta sesión' : 'No conversation available for this session');
       return;
     }
 
@@ -108,7 +111,7 @@ export function SessionSummary({ session, onSave, onDelete }: SessionSummaryProp
 
   const handleShowTranscription = () => {
     if (!session?.conversacion || session.conversacion.length === 0) {
-      alert('No hay transcripción disponible para esta sesión');
+      alert(language === 'es' ? 'No hay transcripción disponible para esta sesión' : 'No transcription available for this session');
       return;
     }
     setShowTranscription(true);
@@ -125,9 +128,11 @@ export function SessionSummary({ session, onSave, onDelete }: SessionSummaryProp
                 <span className="text-2xl">🎙</span>
               </div>
               <div>
-                <h3 className="mb-2">Psicólogo Virtual</h3>
+                <h3 className="mb-2">{language === 'es' ? 'Psicólogo Virtual' : 'Virtual Psychologist'}</h3>
                 <p className="text-sm opacity-90 mb-4">
-                  "Antes de que nos despidamos, me gustaría sugerirte algunas tareas para esta semana que te pueden ayudar:"
+                  {language === 'es'
+                    ? '"Antes de que nos despidamos, me gustaría sugerirte algunas tareas para esta semana que te pueden ayudar:"'
+                    : '"Before we say goodbye, I would like to suggest some tasks for this week that can help you:"'}
                 </p>
               </div>
             </div>
@@ -138,7 +143,7 @@ export function SessionSummary({ session, onSave, onDelete }: SessionSummaryProp
                   <p className="mb-2">{index + 1}. {tarea.titulo}</p>
                   <p className="text-sm opacity-80">{tarea.descripcion}</p>
                   <div className="mt-2 flex items-center gap-2">
-                    <span className="text-xs bg-white/20 px-2 py-1 rounded">⭐ {tarea.puntos} puntos</span>
+                    <span className="text-xs bg-white/20 px-2 py-1 rounded">⭐ {tarea.puntos} {t.summary.points}</span>
                     <span className="text-xs bg-white/20 px-2 py-1 rounded capitalize">{tarea.frecuencia}</span>
                   </div>
                 </div>
@@ -146,14 +151,16 @@ export function SessionSummary({ session, onSave, onDelete }: SessionSummaryProp
             </div>
 
             <p className="text-sm opacity-90 mb-4">
-              "Estas tareas las encontrarás en tu pestaña de Tareas. ¡Nos vemos pronto!"
+              {language === 'es'
+                ? '"Estas tareas las encontrarás en tu pestaña de Tareas. ¡Nos vemos pronto!"'
+                : '"You will find these tasks in your Tasks tab. See you soon!"'}
             </p>
 
             <button
               onClick={() => setShowTasksSuggestion(false)}
               className="w-full bg-white text-purple-600 py-3 rounded-lg hover:bg-purple-50 transition-colors"
             >
-              Continuar →
+              {language === 'es' ? 'Continuar →' : 'Continue →'}
             </button>
           </div>
         )}
@@ -162,7 +169,7 @@ export function SessionSummary({ session, onSave, onDelete }: SessionSummaryProp
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
             {/* Header */}
             <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6">
-              <h1 className="text-2xl mb-2">📊 Resumen de Sesión</h1>
+              <h1 className="text-2xl mb-2">{t.summary.title}</h1>
               <div className="flex items-center gap-4 text-sm opacity-90">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
@@ -170,15 +177,15 @@ export function SessionSummary({ session, onSave, onDelete }: SessionSummaryProp
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4" />
-                  <span>{session.duracion_minutos} minutos</span>
+                  <span>{session.duracion_minutos} {t.summary.minutes}</span>
                 </div>
-                <span className="capitalize">({session.momento_dia})</span>
+                <span className="capitalize">({session.momento_dia === 'mañana' ? t.common.morning : session.momento_dia === 'tarde' ? t.common.afternoon : t.common.evening})</span>
               </div>
             </div>
 
             {/* Emotional Analysis */}
             <div className="p-6 border-b">
-              <h2 className="text-lg mb-4">😰 ANÁLISIS EMOCIONAL</h2>
+              <h2 className="text-lg mb-4">😰 {language === 'es' ? 'ANÁLISIS EMOCIONAL' : 'EMOTIONAL ANALYSIS'}</h2>
               
               <div className="space-y-4">
                 <div>

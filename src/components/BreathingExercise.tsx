@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Wind, X } from 'lucide-react';
+import { useTranslation } from '../TranslationContext';
 
 interface BreathingExerciseProps {
   onComplete: () => void;
@@ -8,6 +9,7 @@ interface BreathingExerciseProps {
 type Phase = 'inhale' | 'hold' | 'exhale' | 'rest';
 
 export function BreathingExercise({ onComplete }: BreathingExerciseProps) {
+  const { t, language } = useTranslation();
   const [phase, setPhase] = useState<Phase>('inhale');
   const [countdown, setCountdown] = useState(4);
   const [cycle, setCycle] = useState(1);
@@ -21,12 +23,21 @@ export function BreathingExercise({ onComplete }: BreathingExerciseProps) {
     rest: 2
   };
 
-  const phaseMessages: Record<Phase, string> = {
+  const phaseMessagesEs: Record<Phase, string> = {
     inhale: 'Inhala profundamente por la nariz',
     hold: 'Mantén el aire',
     exhale: 'Exhala lentamente por la boca',
     rest: 'Descansa'
   };
+
+  const phaseMessagesEn: Record<Phase, string> = {
+    inhale: 'Breathe in deeply through your nose',
+    hold: 'Hold your breath',
+    exhale: 'Exhale slowly through your mouth',
+    rest: 'Rest'
+  };
+
+  const phaseMessages = language === 'es' ? phaseMessagesEs : phaseMessagesEn;
 
   const phaseColors: Record<Phase, string> = {
     inhale: 'from-blue-500 to-cyan-500',
@@ -109,15 +120,17 @@ export function BreathingExercise({ onComplete }: BreathingExerciseProps) {
         <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4">
           <Wind className="w-8 h-8 text-white" />
         </div>
-        <h1 className="text-3xl text-white mb-2">Respiración 4-7-8</h1>
+        <h1 className="text-3xl text-white mb-2">{t.breathing.title}</h1>
         <p className="text-white/80 text-sm">
-          {cycle <= 3 ? `Ciclo ${cycle} de 3` : '¡Completado!'}
+          {cycle <= 3
+            ? `${t.breathing.round} ${cycle} ${t.breathing.of} 3`
+            : (language === 'es' ? '¡Completado!' : 'Completed!')}
         </p>
       </div>
 
       {/* Breathing Circle */}
       <div className="relative mb-12">
-        <div 
+        <div
           className={`w-64 h-64 rounded-full bg-gradient-to-br ${phaseColors[phase]} flex items-center justify-center transition-all duration-1000`}
           style={{
             transform: `scale(${getCircleScale()})`,
@@ -126,7 +139,7 @@ export function BreathingExercise({ onComplete }: BreathingExerciseProps) {
         >
           <div className="text-center text-white">
             <div className="text-7xl mb-2">{countdown}</div>
-            <div className="text-sm opacity-90">segundos</div>
+            <div className="text-sm opacity-90">{language === 'es' ? 'segundos' : 'seconds'}</div>
           </div>
         </div>
       </div>
@@ -139,7 +152,7 @@ export function BreathingExercise({ onComplete }: BreathingExerciseProps) {
             onClick={handleStart}
             className="px-8 py-4 bg-white text-purple-900 rounded-xl hover:bg-purple-50 transition-colors text-lg"
           >
-            Comenzar Ejercicio
+            {language === 'es' ? 'Comenzar Ejercicio' : 'Start Exercise'}
           </button>
         )}
       </div>
@@ -148,11 +161,11 @@ export function BreathingExercise({ onComplete }: BreathingExerciseProps) {
       {isActive && (
         <div className="w-full max-w-md">
           <div className="flex justify-between mb-2 text-white/60 text-sm">
-            <span>Progreso</span>
-            <span>{Math.min(cycle, 3)}/3 ciclos</span>
+            <span>{language === 'es' ? 'Progreso' : 'Progress'}</span>
+            <span>{Math.min(cycle, 3)}/3 {language === 'es' ? 'ciclos' : 'cycles'}</span>
           </div>
           <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-            <div 
+            <div
               className="h-full bg-white/60 transition-all duration-300"
               style={{ width: `${(Math.min(cycle - 1, 3) / 3) * 100}%` }}
             />
@@ -163,15 +176,17 @@ export function BreathingExercise({ onComplete }: BreathingExerciseProps) {
       {/* Instructions */}
       {!isActive && (
         <div className="absolute bottom-6 left-6 right-6 bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-white">
-          <h3 className="mb-3">¿Cómo funciona?</h3>
+          <h3 className="mb-3">{language === 'es' ? '¿Cómo funciona?' : 'How does it work?'}</h3>
           <ul className="space-y-2 text-sm text-white/80">
-            <li>🔵 <strong>Inhala</strong> por la nariz durante 4 segundos</li>
-            <li>🟣 <strong>Mantén</strong> la respiración por 7 segundos</li>
-            <li>🟢 <strong>Exhala</strong> por la boca durante 8 segundos</li>
-            <li>⚪ <strong>Descansa</strong> 2 segundos antes del siguiente ciclo</li>
+            <li>🔵 <strong>{t.breathing.inhale}</strong> {language === 'es' ? 'por la nariz durante 4 segundos' : 'through your nose for 4 seconds'}</li>
+            <li>🟣 <strong>{t.breathing.hold}</strong> {language === 'es' ? 'la respiración por 7 segundos' : 'your breath for 7 seconds'}</li>
+            <li>🟢 <strong>{t.breathing.exhale}</strong> {language === 'es' ? 'por la boca durante 8 segundos' : 'through your mouth for 8 seconds'}</li>
+            <li>⚪ <strong>{language === 'es' ? 'Descansa' : 'Rest'}</strong> {language === 'es' ? '2 segundos antes del siguiente ciclo' : '2 seconds before the next cycle'}</li>
           </ul>
           <p className="text-xs text-white/60 mt-4">
-            Este ejercicio ayuda a reducir la ansiedad y promover la relajación
+            {language === 'es'
+              ? 'Este ejercicio ayuda a reducir la ansiedad y promover la relajación'
+              : 'This exercise helps reduce anxiety and promote relaxation'}
           </p>
         </div>
       )}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Session } from '../types';
 import { Calendar, Clock, TrendingUp, TrendingDown, Minus, Trash2, Headphones, FileText } from 'lucide-react';
+import { useTranslation } from '../TranslationContext';
 
 interface HistoryViewProps {
   sessions: Session[];
@@ -8,6 +9,7 @@ interface HistoryViewProps {
 }
 
 export function HistoryView({ sessions, onDeleteSession }: HistoryViewProps) {
+  const { t, language } = useTranslation();
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showTranscription, setShowTranscription] = useState(false);
@@ -32,9 +34,10 @@ export function HistoryView({ sessions, onDeleteSession }: HistoryViewProps) {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('es-ES', { 
-      day: 'numeric', 
-      month: 'short', 
+    const locale = language === 'es' ? 'es-ES' : 'en-US';
+    return date.toLocaleDateString(locale, {
+      day: 'numeric',
+      month: 'short',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
@@ -63,7 +66,7 @@ export function HistoryView({ sessions, onDeleteSession }: HistoryViewProps) {
 
   const handlePlayConversation = () => {
     if (!selectedSession?.conversacion || selectedSession.conversacion.length === 0) {
-      alert('No hay conversación disponible para esta sesión');
+      alert(language === 'es' ? 'No hay conversación disponible para esta sesión' : 'No conversation available for this session');
       return;
     }
 
@@ -106,7 +109,7 @@ export function HistoryView({ sessions, onDeleteSession }: HistoryViewProps) {
 
   const handleShowTranscription = () => {
     if (!selectedSession?.conversacion || selectedSession.conversacion.length === 0) {
-      alert('No hay transcripción disponible para esta sesión');
+      alert(language === 'es' ? 'No hay transcripción disponible para esta sesión' : 'No transcription available for this session');
       return;
     }
     setShowTranscription(true);
@@ -120,13 +123,13 @@ export function HistoryView({ sessions, onDeleteSession }: HistoryViewProps) {
             onClick={() => setSelectedSession(null)}
             className="mb-6 text-gray-600 hover:text-gray-900"
           >
-            ← Volver
+            ← {language === 'es' ? 'Volver' : 'Back'}
           </button>
 
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
             {/* Header */}
             <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6">
-              <h1 className="text-2xl mb-2">Sesión Detallada</h1>
+              <h1 className="text-2xl mb-2">{language === 'es' ? 'Sesión Detallada' : 'Detailed Session'}</h1>
               <div className="flex items-center gap-4 text-sm opacity-90">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
@@ -134,7 +137,7 @@ export function HistoryView({ sessions, onDeleteSession }: HistoryViewProps) {
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4" />
-                  <span>{selectedSession.duracion_minutos} min</span>
+                  <span>{selectedSession.duracion_minutos} {t.history.minutes}</span>
                 </div>
               </div>
             </div>
@@ -143,20 +146,20 @@ export function HistoryView({ sessions, onDeleteSession }: HistoryViewProps) {
             <div className="p-6 space-y-6">
               {/* Emotional Analysis */}
               <div>
-                <h2 className="text-lg mb-4">😰 Análisis Emocional</h2>
+                <h2 className="text-lg mb-4">😰 {language === 'es' ? 'Análisis Emocional' : 'Emotional Analysis'}</h2>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">Estado predominante:</p>
+                    <p className="text-sm text-gray-600 mb-1">{t.history.predominantEmotion}:</p>
                     <span className={`inline-block px-3 py-1 rounded-full text-sm capitalize ${getEmotionColor(selectedSession.analisis_emocional.emocion_predominante)}`}>
                       {selectedSession.analisis_emocional.emocion_predominante}
                     </span>
                   </div>
 
                   <div>
-                    <p className="text-sm text-gray-600 mb-2">Intensidad promedio:</p>
+                    <p className="text-sm text-gray-600 mb-2">{t.history.intensity}:</p>
                     <div className="flex items-center gap-2">
                       <div className="flex-1 bg-gray-200 h-3 rounded-full overflow-hidden">
-                        <div 
+                        <div
                           className="bg-gradient-to-r from-purple-600 to-pink-600 h-full"
                           style={{ width: `${selectedSession.analisis_emocional.intensidad_promedio * 10}%` }}
                         />
@@ -166,16 +169,20 @@ export function HistoryView({ sessions, onDeleteSession }: HistoryViewProps) {
                   </div>
 
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">Evolución:</p>
+                    <p className="text-sm text-gray-600 mb-1">{t.history.evolution}:</p>
                     <div className="flex items-center gap-2">
                       {getEvolutionIcon(selectedSession.analisis_emocional.evolucion)}
-                      <span className="capitalize">{selectedSession.analisis_emocional.evolucion}</span>
+                      <span className="capitalize">
+                        {selectedSession.analisis_emocional.evolucion === 'mejoró' ? t.history.improved :
+                         selectedSession.analisis_emocional.evolucion === 'empeoró' ? t.history.worsened :
+                         t.history.stayedSame}
+                      </span>
                     </div>
                   </div>
 
                   {selectedSession.analisis_emocional.top_4_emociones.length > 0 && (
                     <div>
-                      <p className="text-sm text-gray-600 mb-2">Top emociones:</p>
+                      <p className="text-sm text-gray-600 mb-2">{language === 'es' ? 'Top emociones' : 'Top emotions'}:</p>
                       <div className="space-y-2">
                         {selectedSession.analisis_emocional.top_4_emociones.map((emocion, index) => (
                           <div key={index} className="flex items-center gap-2">
@@ -193,7 +200,7 @@ export function HistoryView({ sessions, onDeleteSession }: HistoryViewProps) {
               {/* Exercises */}
               {selectedSession.ejercicios_realizados.length > 0 && (
                 <div>
-                  <h2 className="text-lg mb-4">🧘 Ejercicios Realizados</h2>
+                  <h2 className="text-lg mb-4">🧘 {t.history.exercisesCompleted}</h2>
                   <div className="space-y-2">
                     {selectedSession.ejercicios_realizados.map((ejercicio, index) => (
                       <div key={index} className="flex items-center gap-2">
@@ -208,16 +215,16 @@ export function HistoryView({ sessions, onDeleteSession }: HistoryViewProps) {
               {/* User Feedback */}
               {selectedSession.feedback_usuario.calificacion_estrellas > 0 && (
                 <div>
-                  <h2 className="text-lg mb-4">💭 Tu Valoración</h2>
+                  <h2 className="text-lg mb-4">💭 {language === 'es' ? 'Tu Valoración' : 'Your Rating'}</h2>
                   <div className="flex items-center gap-4">
                     {selectedSession.feedback_usuario.estado_emocional_final && (
                       <div>
-                        <p className="text-sm text-gray-600 mb-1">Estado final:</p>
+                        <p className="text-sm text-gray-600 mb-1">{language === 'es' ? 'Estado final' : 'Final state'}:</p>
                         <span className="text-3xl">{selectedSession.feedback_usuario.estado_emocional_final}</span>
                       </div>
                     )}
                     <div>
-                      <p className="text-sm text-gray-600 mb-1">Calificación:</p>
+                      <p className="text-sm text-gray-600 mb-1">{language === 'es' ? 'Calificación' : 'Rating'}:</p>
                       <div className="flex gap-1">
                         {[1, 2, 3, 4, 5].map(star => (
                           <span
@@ -246,21 +253,21 @@ export function HistoryView({ sessions, onDeleteSession }: HistoryViewProps) {
                   }`}
                 >
                   <Headphones className="w-4 h-4" />
-                  <span className="text-sm">{isPlaying ? 'Detener' : 'Escuchar'}</span>
+                  <span className="text-sm">{isPlaying ? (language === 'es' ? 'Detener' : 'Stop') : (language === 'es' ? 'Escuchar' : 'Listen')}</span>
                 </button>
                 <button
                   onClick={handleShowTranscription}
                   className="flex-1 flex items-center justify-center gap-2 py-3 border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
                   <FileText className="w-4 h-4" />
-                  <span className="text-sm">Transcripción</span>
+                  <span className="text-sm">{language === 'es' ? 'Transcripción' : 'Transcription'}</span>
                 </button>
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
                   className="flex-1 flex items-center justify-center gap-2 py-3 border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
                 >
                   <Trash2 className="w-4 h-4" />
-                  <span className="text-sm">Eliminar</span>
+                  <span className="text-sm">{t.history.deleteSession}</span>
                 </button>
               </div>
             </div>
@@ -270,16 +277,16 @@ export function HistoryView({ sessions, onDeleteSession }: HistoryViewProps) {
           {showDeleteConfirm && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
               <div className="bg-white rounded-2xl max-w-md w-full p-6">
-                <h3 className="text-xl mb-4">⚠ Eliminar Sesión</h3>
+                <h3 className="text-xl mb-4">{t.history.confirmDelete}</h3>
                 <p className="text-gray-700 mb-6">
-                  ¿Estás seguro de que quieres eliminar esta sesión? Esta acción no se puede deshacer.
+                  {t.history.deleteWarning}
                 </p>
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowDeleteConfirm(false)}
                     className="flex-1 py-3 border border-gray-300 rounded-lg hover:bg-gray-50"
                   >
-                    Cancelar
+                    {t.history.cancel}
                   </button>
                   <button
                     onClick={() => {
@@ -289,7 +296,7 @@ export function HistoryView({ sessions, onDeleteSession }: HistoryViewProps) {
                     }}
                     className="flex-1 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700"
                   >
-                    ❌ Eliminar
+                    ❌ {t.history.delete}
                   </button>
                 </div>
               </div>
@@ -301,7 +308,7 @@ export function HistoryView({ sessions, onDeleteSession }: HistoryViewProps) {
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
               <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
                 <div className="p-6 border-b">
-                  <h3 className="text-xl mb-2">📝 Transcripción de la Sesión</h3>
+                  <h3 className="text-xl mb-2">📝 {language === 'es' ? 'Transcripción de la Sesión' : 'Session Transcription'}</h3>
                   <p className="text-sm text-gray-600">{formatDate(selectedSession.fecha_hora)}</p>
                 </div>
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
@@ -313,7 +320,7 @@ export function HistoryView({ sessions, onDeleteSession }: HistoryViewProps) {
                       <div className="max-w-[80%]">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-xs font-medium text-gray-500">
-                            {msg.role === 'user' ? 'Tú' : 'Asistente'}
+                            {msg.role === 'user' ? (language === 'es' ? 'Tú' : 'You') : (language === 'es' ? 'Asistente' : 'Assistant')}
                           </span>
                         </div>
                         <div
@@ -334,7 +341,7 @@ export function HistoryView({ sessions, onDeleteSession }: HistoryViewProps) {
                     onClick={() => setShowTranscription(false)}
                     className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:shadow-lg"
                   >
-                    Cerrar
+                    {t.history.close}
                   </button>
                 </div>
               </div>
@@ -348,17 +355,19 @@ export function HistoryView({ sessions, onDeleteSession }: HistoryViewProps) {
   return (
     <div className="p-6 space-y-6">
       <div className="bg-white rounded-2xl p-6 shadow-lg">
-        <h1 className="text-2xl mb-2">📊 Historial de Sesiones</h1>
+        <h1 className="text-2xl mb-2">{t.history.title}</h1>
         <p className="text-gray-600 text-sm">
-          {sessions.length} {sessions.length === 1 ? 'sesión registrada' : 'sesiones registradas'}
+          {sessions.length} {sessions.length === 1
+            ? (language === 'es' ? 'sesión registrada' : 'session recorded')
+            : (language === 'es' ? 'sesiones registradas' : 'sessions recorded')}
         </p>
       </div>
 
       {sessions.length === 0 ? (
         <div className="bg-white rounded-2xl p-12 text-center shadow-lg">
           <div className="text-6xl mb-4">📝</div>
-          <p className="text-gray-600 mb-2">No tienes sesiones registradas</p>
-          <p className="text-sm text-gray-500">Inicia tu primera sesión para comenzar tu viaje de bienestar</p>
+          <p className="text-gray-600 mb-2">{t.history.noSessions}</p>
+          <p className="text-sm text-gray-500">{t.history.startFirst}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -375,7 +384,7 @@ export function HistoryView({ sessions, onDeleteSession }: HistoryViewProps) {
                     <span>{formatDate(session.fecha_hora)}</span>
                     <span>•</span>
                     <Clock className="w-4 h-4" />
-                    <span>{session.duracion_minutos} min</span>
+                    <span>{session.duracion_minutos} {t.history.minutes}</span>
                   </div>
                   {session.analisis_emocional.emocion_predominante && (
                     <div className="flex items-center gap-2">
@@ -384,7 +393,11 @@ export function HistoryView({ sessions, onDeleteSession }: HistoryViewProps) {
                       </span>
                       <div className="flex items-center gap-1">
                         {getEvolutionIcon(session.analisis_emocional.evolucion)}
-                        <span className="text-sm text-gray-600 capitalize">{session.analisis_emocional.evolucion}</span>
+                        <span className="text-sm text-gray-600 capitalize">
+                          {session.analisis_emocional.evolucion === 'mejoró' ? t.history.improved :
+                           session.analisis_emocional.evolucion === 'empeoró' ? t.history.worsened :
+                           t.history.stayedSame}
+                        </span>
                       </div>
                     </div>
                   )}
@@ -394,7 +407,7 @@ export function HistoryView({ sessions, onDeleteSession }: HistoryViewProps) {
                 )}
               </div>
               <button className="text-sm text-purple-600 hover:underline">
-                Ver detalles &gt;
+                {language === 'es' ? 'Ver detalles' : 'View details'} &gt;
               </button>
             </div>
           ))}
