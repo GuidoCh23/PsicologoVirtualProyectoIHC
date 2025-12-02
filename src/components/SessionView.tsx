@@ -24,17 +24,38 @@ export function SessionView({ session, onEndSession }: SessionViewProps) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [currentMessage, setCurrentMessage] = useState('');
   const [shouldEndSession, setShouldEndSession] = useState(false);
+  const [voiceGender, setVoiceGender] = useState<'male' | 'female'>('male');
+  const [assistantLanguage, setAssistantLanguage] = useState<'es' | 'en'>('es');
   const recognitionRef = useRef<any>(null);
   const aiServiceRef = useRef<AIService | null>(null);
   const prevIsSpeakingRef = useRef<boolean>(false);
 
   useEffect(() => {
-    // Initialize AI Service (already configured with hardcoded key)
-    aiServiceRef.current = new AIService();
+    // Load settings from localStorage first
+    const savedSettings = localStorage.getItem('appSettings');
+    let loadedLanguage = 'es';
+    let loadedGender: 'male' | 'female' = 'male';
 
-    // Start with greeting
+    if (savedSettings) {
+      const settings = JSON.parse(savedSettings);
+      if (settings.voiceGender) {
+        setVoiceGender(settings.voiceGender);
+        loadedGender = settings.voiceGender;
+      }
+      if (settings.assistantLanguage) {
+        setAssistantLanguage(settings.assistantLanguage);
+        loadedLanguage = settings.assistantLanguage;
+      }
+    }
+
+    // Initialize AI Service with the loaded language
+    aiServiceRef.current = new AIService(loadedLanguage);
+
+    // Start with greeting in the correct language
     setTimeout(() => {
-      const greeting = 'Hola, ¿cómo te sientes hoy? Estoy aquí para escucharte.';
+      const greeting = loadedLanguage === 'es'
+        ? 'Hola, ¿cómo te sientes hoy? Estoy aquí para escucharte.'
+        : 'Hello, how are you feeling today? I\'m here to listen to you.';
       setMessages([{
         role: 'assistant',
         text: greeting
@@ -203,10 +224,26 @@ export function SessionView({ session, onEndSession }: SessionViewProps) {
         }
 
         const utterance = new SpeechSynthesisUtterance(chunks[currentIndex]);
-        utterance.lang = 'es-ES';
+        utterance.lang = assistantLanguage === 'es' ? 'es-ES' : 'en-US';
         utterance.rate = 0.9;
         utterance.pitch = 1;
         utterance.volume = 1;
+
+        // Select voice based on gender setting
+        const voices = window.speechSynthesis.getVoices();
+        const langPrefix = assistantLanguage === 'es' ? 'es' : 'en';
+
+        const preferredVoice = voices.find(voice => {
+          const isCorrectLang = voice.lang.startsWith(langPrefix);
+          const matchesGender = voiceGender === 'female'
+            ? voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('mujer') || !voice.name.toLowerCase().includes('male')
+            : voice.name.toLowerCase().includes('male') || voice.name.toLowerCase().includes('hombre');
+          return isCorrectLang && matchesGender;
+        });
+
+        if (preferredVoice) {
+          utterance.voice = preferredVoice;
+        }
 
         // Keep the synthesis active to prevent timeout
         const keepAlive = setInterval(() => {
@@ -278,7 +315,7 @@ export function SessionView({ session, onEndSession }: SessionViewProps) {
     // Enable continuous listening and interim results for better UX
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = 'es-ES';
+    recognition.lang = assistantLanguage === 'es' ? 'es-ES' : 'en-US';
     recognition.maxAlternatives = 1;
 
     recognitionRef.current = recognition;

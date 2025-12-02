@@ -8,10 +8,12 @@ import { SettingsView } from './components/SettingsView';
 import { DisclaimerModal } from './components/DisclaimerModal';
 import { Home, CheckSquare, BarChart3, Settings, MessageCircle } from 'lucide-react';
 import { Session, Task } from './types';
+import { useTranslation } from './TranslationContext';
 
 type View = 'dashboard' | 'tasks' | 'history' | 'settings' | 'session' | 'summary';
 
 export default function App() {
+  const { t } = useTranslation();
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -221,7 +223,7 @@ export default function App() {
                   }`}
                 >
                   <Home className="w-6 h-6" />
-                  <span className="text-xs">Inicio</span>
+                  <span className="text-xs">{t.nav.home}</span>
                 </button>
 
                 <button
@@ -231,7 +233,7 @@ export default function App() {
                   }`}
                 >
                   <CheckSquare className="w-6 h-6" />
-                  <span className="text-xs">Tareas</span>
+                  <span className="text-xs">{t.nav.tasks}</span>
                   {pendingTasks.length > 0 && (
                     <span className="absolute top-1 right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                       {pendingTasks.length}
@@ -253,7 +255,7 @@ export default function App() {
                   }`}
                 >
                   <BarChart3 className="w-6 h-6" />
-                  <span className="text-xs">Historial</span>
+                  <span className="text-xs">{t.nav.history}</span>
                 </button>
 
                 <button
@@ -263,7 +265,7 @@ export default function App() {
                   }`}
                 >
                   <Settings className="w-6 h-6" />
-                  <span className="text-xs">Ajustes</span>
+                  <span className="text-xs">{t.nav.settings}</span>
                 </button>
               </div>
             </div>
