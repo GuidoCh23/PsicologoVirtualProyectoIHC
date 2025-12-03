@@ -16,11 +16,17 @@ interface Settings {
 export function SettingsView({ onClearAllData }: SettingsViewProps) {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const { t, setLanguage, language } = useTranslation();
-  const { user, logout } = useAuth();
+  const { user, logout, updateProfile } = useAuth();
   const [settings, setSettings] = useState<Settings>({
     voiceGender: 'male',
     appLanguage: 'es',
     assistantLanguage: 'es'
+  });
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileData, setProfileData] = useState({
+    nombre: user?.nombre || '',
+    email: user?.email || '',
+    apodo: user?.apodo || '',
   });
 
   useEffect(() => {
@@ -110,6 +116,29 @@ export function SettingsView({ onClearAllData }: SettingsViewProps) {
     input.click();
   };
 
+  const handleSaveProfile = async () => {
+    const success = await updateProfile(profileData);
+    if (success) {
+      setIsEditingProfile(false);
+      alert(language === 'es' ? '¡Perfil actualizado exitosamente!' : 'Profile updated successfully!');
+    } else {
+      alert(language === 'es' ? 'Error al actualizar el perfil' : 'Error updating profile');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setProfileData({
+      nombre: user?.nombre || '',
+      email: user?.email || '',
+      apodo: user?.apodo || '',
+    });
+    setIsEditingProfile(false);
+  };
+
+  const handlePreferenceChange = async (preference: 'nombre' | 'apodo' | 'ninguno') => {
+    await updateProfile({ preferencia_nombre: preference });
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="bg-white rounded-2xl p-6 shadow-lg">
@@ -119,22 +148,120 @@ export function SettingsView({ onClearAllData }: SettingsViewProps) {
 
       {/* User Account Section */}
       <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-        <div className="p-6 border-b">
-          <h2 className="text-lg mb-4">{language === 'es' ? 'Mi Cuenta' : 'My Account'}</h2>
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg">{language === 'es' ? 'Mi Perfil' : 'My Profile'}</h2>
+            {!isEditingProfile && (
+              <button
+                onClick={() => setIsEditingProfile(true)}
+                className="text-purple-600 hover:text-purple-700 text-sm font-medium"
+              >
+                {language === 'es' ? 'Editar' : 'Edit'}
+              </button>
+            )}
+          </div>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center text-white text-xl">
-                  {user?.nombre.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <p className="font-medium">{user?.nombre}</p>
-                  <p className="text-sm text-gray-600">{user?.email}</p>
-                </div>
+            {/* Avatar and Basic Info */}
+            <div className="flex items-center gap-4 p-4 bg-purple-50 rounded-lg">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center text-white text-2xl font-semibold">
+                {(user?.apodo || user?.nombre)?.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex-1">
+                {!isEditingProfile ? (
+                  <>
+                    <p className="font-semibold text-lg">{user?.nombre}</p>
+                    {user?.apodo && (
+                      <p className="text-sm text-purple-600">"{user.apodo}"</p>
+                    )}
+                    <p className="text-sm text-gray-600">{user?.email}</p>
+                  </>
+                ) : (
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      value={profileData.nombre}
+                      onChange={(e) => setProfileData({ ...profileData, nombre: e.target.value })}
+                      placeholder={language === 'es' ? 'Nombre completo' : 'Full name'}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm"
+                    />
+                    <input
+                      type="email"
+                      value={profileData.email}
+                      onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                      placeholder="Email"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm"
+                    />
+                    <input
+                      type="text"
+                      value={profileData.apodo}
+                      onChange={(e) => setProfileData({ ...profileData, apodo: e.target.value })}
+                      placeholder={language === 'es' ? 'Apodo (opcional)' : 'Nickname (optional)'}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
+            {/* Edit Actions */}
+            {isEditingProfile && (
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSaveProfile}
+                  className="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  {language === 'es' ? 'Guardar' : 'Save'}
+                </button>
+                <button
+                  onClick={handleCancelEdit}
+                  className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  {language === 'es' ? 'Cancelar' : 'Cancel'}
+                </button>
+              </div>
+            )}
+
+            {/* Preference: How assistant addresses user */}
+            <div className="p-4 border border-gray-200 rounded-lg">
+              <p className="font-medium mb-2">{language === 'es' ? '¿Cómo quieres que te llame el asistente?' : 'How should the assistant address you?'}</p>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="addressPreference"
+                    checked={user?.preferencia_nombre === 'nombre'}
+                    onChange={() => handlePreferenceChange('nombre')}
+                    className="text-purple-600 focus:ring-purple-500"
+                  />
+                  <span className="text-sm">{language === 'es' ? 'Por mi nombre' : 'By my name'} ({user?.nombre})</span>
+                </label>
+                {user?.apodo && (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="addressPreference"
+                      checked={user?.preferencia_nombre === 'apodo'}
+                      onChange={() => handlePreferenceChange('apodo')}
+                      className="text-purple-600 focus:ring-purple-500"
+                    />
+                    <span className="text-sm">{language === 'es' ? 'Por mi apodo' : 'By my nickname'} ({user.apodo})</span>
+                  </label>
+                )}
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="addressPreference"
+                    checked={user?.preferencia_nombre === 'ninguno'}
+                    onChange={() => handlePreferenceChange('ninguno')}
+                    className="text-purple-600 focus:ring-purple-500"
+                  />
+                  <span className="text-sm">{language === 'es' ? 'No usar nombre' : "Don't use a name"}</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Logout Button */}
             <button
               onClick={logout}
               className="w-full flex items-center justify-center gap-3 p-4 border border-gray-300 rounded-lg hover:bg-red-50 hover:border-red-300 transition-colors text-red-600"

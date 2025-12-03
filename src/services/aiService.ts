@@ -8,6 +8,35 @@ interface AIConfig {
   apiKey: string;
 }
 
+const getSystemPrompt = (language: 'es' | 'en', userName?: string) => {
+  const userContext = userName
+    ? (language === 'es'
+      ? `El usuario se llama ${userName}. Puedes usar su nombre de manera natural en la conversación para crear una conexión más cercana y personal.`
+      : `The user's name is ${userName}. You can use their name naturally in the conversation to create a closer and more personal connection.`)
+    : '';
+
+  if (language === 'es') {
+    return `Eres un asistente terapéutico virtual empático y profesional. Tu objetivo es:
+
+1. Escuchar activamente y validar las emociones del usuario
+2. Hacer preguntas abiertas para entender mejor su situación
+3. Ofrecer técnicas de manejo emocional cuando sea apropiado
+4. Sugerir ejercicios de respiración, mindfulness o grounding cuando detectes ansiedad o estrés
+5. Ser cálido, comprensivo y no juzgar
+
+${userContext}
+
+IMPORTANTE:
+- NO diagnostiques condiciones médicas
+- NO prescribas medicamentos
+- Si detectas crisis severa, ideación suicida o autolesión, recomienda buscar ayuda profesional inmediata
+- Mantén respuestas concisas (2-4 oraciones)
+- Usa un tono conversacional y cercano en español
+- Si mencionas un ejercicio, pregunta si le gustaría hacerlo`;
+  }
+  return '';
+};
+
 const SYSTEM_PROMPT = `Eres un asistente terapéutico virtual empático y profesional. Tu objetivo es:
 
 1. Escuchar activamente y validar las emociones del usuario
@@ -201,7 +230,7 @@ export class AIService {
   private conversationHistory: AIMessage[] = [];
   private language: 'es' | 'en' = 'es';
 
-  constructor(language: 'es' | 'en' = 'es') {
+  constructor(language: 'es' | 'en' = 'es', userName?: string) {
     this.language = language;
 
     // Use hardcoded Groq API key
@@ -210,7 +239,16 @@ export class AIService {
       apiKey: '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'
     };
 
-    const systemPrompt = language === 'es' ? SYSTEM_PROMPT : SYSTEM_PROMPT_EN;
+    let systemPrompt = language === 'es' ? SYSTEM_PROMPT : SYSTEM_PROMPT_EN;
+
+    // Add user context if name is provided
+    if (userName) {
+      const userContext = language === 'es'
+        ? `\n\nCONTEXTO DEL USUARIO:\nEl usuario se llama ${userName}. Puedes usar su nombre de manera natural en la conversación para crear una conexión más cercana y personal. Usa su nombre ocasionalmente durante la sesión, especialmente cuando valides sus emociones o cuando quieras enfatizar algo importante.`
+        : `\n\nUSER CONTEXT:\nThe user's name is ${userName}. You can use their name naturally in the conversation to create a closer and more personal connection. Use their name occasionally during the session, especially when validating their emotions or when you want to emphasize something important.`;
+
+      systemPrompt += userContext;
+    }
 
     this.conversationHistory = [
       { role: 'system', content: systemPrompt }
@@ -402,9 +440,14 @@ export class AIService {
 export function detectBreathingExerciseSuggestion(response: string): boolean {
   const lowerResponse = response.toLowerCase();
   return (
+    // Spanish
     lowerResponse.includes('ejercicio de respiración') ||
     lowerResponse.includes('respiración 4-7-8') ||
-    lowerResponse.includes('respirar') && lowerResponse.includes('ejercicio')
+    (lowerResponse.includes('respirar') && lowerResponse.includes('ejercicio')) ||
+    // English
+    lowerResponse.includes('breathing exercise') ||
+    lowerResponse.includes('4-7-8 breathing') ||
+    (lowerResponse.includes('breathe') && lowerResponse.includes('exercise'))
   );
 }
 
@@ -412,6 +455,7 @@ export function detectBreathingExerciseSuggestion(response: string): boolean {
 export function detectCrisis(message: string): boolean {
   const lowerMessage = message.toLowerCase();
   const crisisKeywords = [
+    // Spanish
     'suicidio',
     'suicidarme',
     'matarme',
@@ -420,7 +464,16 @@ export function detectCrisis(message: string): boolean {
     'quiero morir',
     'autolesión',
     'cortarme',
-    'hacerme daño'
+    'hacerme daño',
+    // English
+    'suicide',
+    'kill myself',
+    'end my life',
+    'don\'t want to live',
+    'want to die',
+    'self-harm',
+    'cut myself',
+    'hurt myself'
   ];
 
   return crisisKeywords.some(keyword => lowerMessage.includes(keyword));
@@ -430,6 +483,7 @@ export function detectCrisis(message: string): boolean {
 export function detectSessionEnd(message: string): boolean {
   const lowerMessage = message.toLowerCase();
   const endPhrases = [
+    // Spanish
     'terminemos',
     'terminar',
     'hasta aquí',
@@ -452,7 +506,27 @@ export function detectSessionEnd(message: string): boolean {
     'ya es todo',
     'eso es todo',
     'nada más',
-    'nada mas'
+    'nada mas',
+    // English
+    'let\'s finish',
+    'let\'s end',
+    'finish',
+    'end session',
+    'that\'s all',
+    'i have to go',
+    'i must go',
+    'gotta go',
+    'bye',
+    'goodbye',
+    'see you',
+    'until later',
+    'i\'m leaving',
+    'leaving now',
+    'end this',
+    'wrap up',
+    'that\'s it',
+    'nothing more',
+    'no more'
   ];
 
   return endPhrases.some(phrase => lowerMessage.includes(phrase));

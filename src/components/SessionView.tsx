@@ -5,6 +5,7 @@ import { CrisisModal } from './CrisisModal';
 import { BreathingExercise } from './BreathingExercise';
 import { AIService, detectBreathingExerciseSuggestion, detectCrisis, detectSessionEnd } from '../services/aiService';
 import { useTranslation } from '../TranslationContext';
+import { useAuth } from '../AuthContext';
 
 interface SessionViewProps {
   session: Session;
@@ -13,6 +14,7 @@ interface SessionViewProps {
 
 export function SessionView({ session, onEndSession }: SessionViewProps) {
   const { t, language } = useTranslation();
+  const { user } = useAuth();
   const [isListening, setIsListening] = useState(false);
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant', text: string }>>([]);
   const [sessionDuration, setSessionDuration] = useState(0);
@@ -32,6 +34,35 @@ export function SessionView({ session, onEndSession }: SessionViewProps) {
   const aiServiceRef = useRef<AIService | null>(null);
   const prevIsSpeakingRef = useRef<boolean>(false);
 
+  // Generate personalized greeting based on user preferences
+  const getPersonalizedGreeting = (lang: 'es' | 'en'): string => {
+    let userName = '';
+
+    if (user?.preferencia_nombre === 'nombre') {
+      userName = user.nombre;
+    } else if (user?.preferencia_nombre === 'apodo' && user.apodo) {
+      userName = user.apodo;
+    }
+
+    if (lang === 'es') {
+      const greetings = [
+        userName ? `¡Hola ${userName}! ¿Qué tal? ¿Qué podrías contarme sobre tu día?` : '¡Hola! ¿Qué tal? ¿Qué podrías contarme sobre tu día?',
+        userName ? `¡Hola ${userName}! ¿Cómo te sientes hoy? Estoy aquí para escucharte.` : '¡Hola! ¿Cómo te sientes hoy? Estoy aquí para escucharte.',
+        userName ? `Hola ${userName}, ¿cómo ha sido tu día? Cuéntame lo que quieras.` : 'Hola, ¿cómo ha sido tu día? Cuéntame lo que quieras.',
+        userName ? `¡Qué bueno verte ${userName}! ¿Hay algo especial que quieras compartir hoy?` : '¡Qué bueno verte! ¿Hay algo especial que quieras compartir hoy?',
+      ];
+      return greetings[Math.floor(Math.random() * greetings.length)];
+    } else {
+      const greetings = [
+        userName ? `Hi ${userName}! How are you? What could you tell me about your day?` : 'Hi! How are you? What could you tell me about your day?',
+        userName ? `Hello ${userName}! How are you feeling today? I'm here to listen.` : 'Hello! How are you feeling today? I\'m here to listen.',
+        userName ? `Hi ${userName}, how has your day been? Tell me whatever you'd like.` : 'Hi, how has your day been? Tell me whatever you\'d like.',
+        userName ? `Great to see you ${userName}! Is there anything special you'd like to share today?` : 'Great to see you! Is there anything special you\'d like to share today?',
+      ];
+      return greetings[Math.floor(Math.random() * greetings.length)];
+    }
+  };
+
   useEffect(() => {
     // Load settings from localStorage first
     const savedSettings = localStorage.getItem('appSettings');
@@ -50,14 +81,20 @@ export function SessionView({ session, onEndSession }: SessionViewProps) {
       }
     }
 
-    // Initialize AI Service with the loaded language
-    aiServiceRef.current = new AIService(loadedLanguage);
+    // Get user name based on preference
+    let userName: string | undefined = undefined;
+    if (user?.preferencia_nombre === 'nombre') {
+      userName = user.nombre;
+    } else if (user?.preferencia_nombre === 'apodo' && user.apodo) {
+      userName = user.apodo;
+    }
 
-    // Start with greeting in the correct language
+    // Initialize AI Service with the loaded language and user name
+    aiServiceRef.current = new AIService(loadedLanguage, userName);
+
+    // Start with personalized greeting
     setTimeout(() => {
-      const greeting = loadedLanguage === 'es'
-        ? 'Hola, ¿cómo te sientes hoy? Estoy aquí para escucharte.'
-        : 'Hello, how are you feeling today? I\'m here to listen to you.';
+      const greeting = getPersonalizedGreeting(loadedLanguage);
       setMessages([{
         role: 'assistant',
         text: greeting

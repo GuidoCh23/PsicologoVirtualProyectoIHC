@@ -6,6 +6,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   register: (nombre: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  updateProfile: (updates: Partial<User>) => Promise<boolean>;
   isAuthenticated: boolean;
 }
 
@@ -16,8 +17,10 @@ interface StoredUser {
   nombre: string;
   email: string;
   password: string;
+  apodo?: string;
   fecha_registro: string;
   foto_perfil?: string;
+  preferencia_nombre?: 'nombre' | 'apodo' | 'ninguno';
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -109,6 +112,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('emosense_current_user');
   };
 
+  const updateProfile = async (updates: Partial<User>): Promise<boolean> => {
+    try {
+      if (!user) return false;
+
+      const usersJson = localStorage.getItem('emosense_users');
+      const users: StoredUser[] = usersJson ? JSON.parse(usersJson) : [];
+
+      const userIndex = users.findIndex(u => u.id === user.id);
+      if (userIndex === -1) return false;
+
+      // Update user in storage
+      users[userIndex] = {
+        ...users[userIndex],
+        ...updates,
+      };
+
+      localStorage.setItem('emosense_users', JSON.stringify(users));
+
+      // Update current user
+      const updatedUser: User = {
+        ...user,
+        ...updates,
+      };
+
+      setUser(updatedUser);
+      localStorage.setItem('emosense_current_user', JSON.stringify(updatedUser));
+
+      return true;
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      return false;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -116,6 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         logout,
+        updateProfile,
         isAuthenticated: !!user,
       }}
     >

@@ -46,6 +46,8 @@ export interface User {
   id: string;
   nombre: string;
   email: string;
+  apodo?: string;
   fecha_registro: string;
   foto_perfil?: string;
+  preferencia_nombre?: 'nombre' | 'apodo' | 'ninguno';
 }
