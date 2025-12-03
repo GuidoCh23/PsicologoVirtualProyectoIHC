@@ -1,0 +1,117 @@
+// This is your Prisma schema file
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id                  String    @id @default(uuid())
+  nombre              String
+  email               String    @unique
+  password            String? // Null for OAuth users
+  apodo               String?
+  fecha_registro      DateTime  @default(now())
+  foto_perfil         String?
+  preferencia_nombre  PreferenciaNombre @default(nombre)
+  nombre_asistente    String?
+
+  // OAuth fields
+  googleId            String?   @unique
+  provider            String    @default("local") // 'local', 'google'
+
+  // Relations
+  sessions            Session[]
+  tasks               Task[]
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([email])
+  @@index([googleId])
+}
+
+enum PreferenciaNombre {
+  nombre
+  apodo
+  ninguno
+}
+
+model Session {
+  id                    String   @id @default(uuid())
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fecha_hora            DateTime @default(now())
+  momento_dia           MomentoDia
+  duracion_minutos      Int
+
+  // Análisis emocional
+  emocion_predominante  String
+  intensidad_promedio   Float
+  evolucion             Evolucion
+  top_emociones         Json // Array of {emocion: string, porcentaje: number}
+
+  // Ejercicios y feedback
+  ejercicios_realizados Json // Array of exercise names
+  estado_emocional_final String
+  calificacion_estrellas Int
+
+  // Conversación
+  conversacion          Json // Array of {role: 'user' | 'assistant', text: string}
+
+  // Relations
+  tasks                 Task[]
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([userId])
+  @@index([fecha_hora])
+}
+
+enum MomentoDia {
+  manana @map("mañana")
+  tarde
+  noche
+}
+
+enum Evolucion {
+  mejoro @map("mejoró")
+  empeoro @map("empeoró")
+  se_mantuvo
+}
+
+model Task {
+  id                  String      @id @default(uuid())
+  userId              String
+  user                User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  sesion_origen       String
+  session             Session     @relation(fields: [sesion_origen], references: [id], onDelete: Cascade)
+
+  fecha_asignada      DateTime    @default(now())
+  fecha_vencimiento   DateTime
+  titulo              String
+  descripcion         String
+  frecuencia          String
+  puntos              Int
+  estado              EstadoTarea @default(pendiente)
+  fecha_completada    DateTime?
+
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([sesion_origen])
+  @@index([estado])
+}
+
+enum EstadoTarea {
+  pendiente
+  completada
+}
