@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import prisma from '../config/database';
 import { generateToken } from '../config/jwt';
-import { RegisterDTO, LoginDTO, AuthRequest } from '../types';
+import { RegisterDTO, LoginDTO, AuthRequest } from '../types/index';
 
 export class AuthController {
   // Register with email/password
