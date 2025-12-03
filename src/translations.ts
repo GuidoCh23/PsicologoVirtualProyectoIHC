@@ -284,8 +284,8 @@ export const translations: Record<'es' | 'en', Translations> = {
       assistantLanguage: 'Idioma del asistente',
       assistantLanguageDescription: 'El idioma en que el asistente responde',
       about: 'Acerca de',
-      appVersion: 'Psicólogo Virtual v1.0',
-      appDescription: 'Una herramienta de apoyo emocional y bienestar',
+      appVersion: 'EmoSense v1.0',
+      appDescription: 'Tu asistente de inteligencia emocional',
       disclaimer: '⚠ Esta aplicación NO es un psicólogo real y no proporciona diagnósticos médicos ni tratamientos clínicos.',
       clearConfirm: {
         title: '⚠ Eliminar Todos los Datos',
@@ -457,8 +457,8 @@ export const translations: Record<'es' | 'en', Translations> = {
       assistantLanguage: 'Assistant language',
       assistantLanguageDescription: 'The language the assistant responds in',
       about: 'About',
-      appVersion: 'Virtual Psychologist v1.0',
-      appDescription: 'An emotional support and wellness tool',
+      appVersion: 'EmoSense v1.0',
+      appDescription: 'Your emotional intelligence assistant',
       disclaimer: '⚠ This application is NOT a real psychologist and does not provide medical diagnoses or clinical treatments.',
       clearConfirm: {
         title: '⚠ Delete All Data',

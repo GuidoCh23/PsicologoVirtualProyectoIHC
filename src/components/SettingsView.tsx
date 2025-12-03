@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Lock, Trash2, Download, Upload, Shield, Mic, Globe, MessageSquare } from 'lucide-react';
+import { Lock, Trash2, Download, Upload, Shield, Mic, Globe, MessageSquare, LogOut } from 'lucide-react';
 import { useTranslation } from '../TranslationContext';
+import { useAuth } from '../AuthContext';
 
 interface SettingsViewProps {
   onClearAllData: () => void;
@@ -14,7 +15,8 @@ interface Settings {
 
 export function SettingsView({ onClearAllData }: SettingsViewProps) {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const { t, setLanguage } = useTranslation();
+  const { t, setLanguage, language } = useTranslation();
+  const { user, logout } = useAuth();
   const [settings, setSettings] = useState<Settings>({
     voiceGender: 'male',
     appLanguage: 'es',
@@ -113,6 +115,35 @@ export function SettingsView({ onClearAllData }: SettingsViewProps) {
       <div className="bg-white rounded-2xl p-6 shadow-lg">
         <h1 className="text-2xl mb-2">{t.settings.title}</h1>
         <p className="text-gray-600 text-sm">{t.settings.subtitle}</p>
+      </div>
+
+      {/* User Account Section */}
+      <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+        <div className="p-6 border-b">
+          <h2 className="text-lg mb-4">{language === 'es' ? 'Mi Cuenta' : 'My Account'}</h2>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center text-white text-xl">
+                  {user?.nombre.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <p className="font-medium">{user?.nombre}</p>
+                  <p className="text-sm text-gray-600">{user?.email}</p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={logout}
+              className="w-full flex items-center justify-center gap-3 p-4 border border-gray-300 rounded-lg hover:bg-red-50 hover:border-red-300 transition-colors text-red-600"
+            >
+              <LogOut className="w-5 h-5" />
+              <span>{language === 'es' ? 'Cerrar Sesión' : 'Logout'}</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl shadow-lg overflow-hidden">

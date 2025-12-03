@@ -6,14 +6,17 @@ import { TasksView } from './components/TasksView';
 import { HistoryView } from './components/HistoryView';
 import { SettingsView } from './components/SettingsView';
 import { DisclaimerModal } from './components/DisclaimerModal';
+import { LoginView } from './components/LoginView';
 import { Home, CheckSquare, BarChart3, Settings, MessageCircle } from 'lucide-react';
 import { Session, Task } from './types';
 import { useTranslation } from './TranslationContext';
+import { useAuth } from './AuthContext';
 
 type View = 'dashboard' | 'tasks' | 'history' | 'settings' | 'session' | 'summary';
 
 export default function App() {
   const { t } = useTranslation();
+  const { isAuthenticated } = useAuth();
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -145,10 +148,15 @@ export default function App() {
   const pendingTasks = tasks.filter(t => t.estado === 'pendiente');
   const completedTasks = tasks.filter(t => t.estado === 'completada');
 
+  // Show login if not authenticated
+  if (!isAuthenticated) {
+    return <LoginView />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-      <DisclaimerModal 
-        isOpen={showDisclaimer} 
+      <DisclaimerModal
+        isOpen={showDisclaimer}
         onAccept={handleDisclaimerAccept}
       />
 

@@ -41,3 +41,11 @@ export interface Task {
   estado: 'pendiente' | 'completada';
   fecha_completada: string | null;
 }
+
+export interface User {
+  id: string;
+  nombre: string;
+  email: string;
+  fecha_registro: string;
+  foto_perfil?: string;
+}
