@@ -1,4 +1,4 @@
-import { Response, NextFunction } from 'express';
+import { Response, NextFunction, Request } from 'express';
 import { AuthRequest } from '../types';
 import { verifyToken } from '../config/jwt';
 import prisma from '../config/database';
