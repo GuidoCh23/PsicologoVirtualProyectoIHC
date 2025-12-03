@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: emosense-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: emosense-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: GROQ_API_KEY
+        sync: false  # Configurar manualmente en Render dashboard
+      - key: FRONTEND_URL
+        sync: false  # Configurar después del deploy de Vercel
+      - key: COOKIE_SECRET
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        sync: false  # Opcional - configurar si usas OAuth
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false  # Opcional - configurar si usas OAuth
+      - key: GOOGLE_CALLBACK_URL
+        sync: false  # Opcional - configurar si usas OAuth
+
+databases:
+  - name: emosense-db
+    databaseName: emosense
+    plan: free
+    region: oregon
