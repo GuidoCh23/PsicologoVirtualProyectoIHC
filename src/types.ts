@@ -50,4 +50,5 @@ export interface User {
   fecha_registro: string;
   foto_perfil?: string;
   preferencia_nombre?: 'nombre' | 'apodo' | 'ninguno';
+  nombre_asistente?: string;
 }

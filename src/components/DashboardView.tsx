@@ -1,6 +1,7 @@
 import { Session, Task } from '../types';
 import { Trophy, Flame, Gem, ArrowRight, Clock } from 'lucide-react';
 import { useTranslation } from '../TranslationContext';
+import { useAuth } from '../AuthContext';
 
 interface DashboardViewProps {
   sessions: Session[];
@@ -20,6 +21,7 @@ export function DashboardView({
   onNavigateToTasks
 }: DashboardViewProps) {
   const { t, language } = useTranslation();
+  const { user } = useAuth();
   const lastSession = sessions[0];
 
   const getLevel = (points: number) => {
@@ -70,11 +72,26 @@ export function DashboardView({
     return map[emotion.toLowerCase()] || '😐';
   };
 
+  // Get user's display name based on preference
+  const getUserDisplayName = () => {
+    if (user?.preferencia_nombre === 'nombre') {
+      return user.nombre;
+    } else if (user?.preferencia_nombre === 'apodo' && user.apodo) {
+      return user.apodo;
+    }
+    return ''; // Don't show name if preference is 'ninguno'
+  };
+
+  const displayName = getUserDisplayName();
+  const welcomeMessage = displayName
+    ? (language === 'es' ? `👋 Bienvenido ${displayName}` : `👋 Welcome ${displayName}`)
+    : t.dashboard.title;
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="bg-white rounded-2xl p-6 shadow-lg">
-        <h1 className="text-2xl mb-2">{t.dashboard.title}</h1>
+        <h1 className="text-2xl mb-2">{welcomeMessage}</h1>
         <p className="text-gray-600">{t.dashboard.subtitle}</p>
       </div>
 

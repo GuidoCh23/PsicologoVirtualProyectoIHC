@@ -347,6 +347,21 @@ export function SettingsView({ onClearAllData }: SettingsViewProps) {
           <h2 className="text-lg mb-4">{t.settings.assistantConfig}</h2>
 
           <div className="space-y-4">
+            {/* Assistant Name */}
+            <div className="flex items-start gap-3 p-4 border border-gray-300 rounded-lg">
+              <MessageSquare className="w-5 h-5 mt-1 text-purple-600" />
+              <div className="flex-1">
+                <p className="mb-1">{t.settings.assistantName}</p>
+                <p className="text-sm text-gray-600 mb-3">{t.settings.assistantNameDescription}</p>
+                <input
+                  type="text"
+                  value={user?.nombre_asistente || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateProfile({ nombre_asistente: e.target.value })}
+                  placeholder={t.settings.assistantNamePlaceholder}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm"
+                />
+              </div>
+            </div>
             {/* Voice Gender */}
             <div className="p-4 border border-gray-200 rounded-lg">
               <div className="flex items-center gap-3 mb-3">

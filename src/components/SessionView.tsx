@@ -89,8 +89,11 @@ export function SessionView({ session, onEndSession }: SessionViewProps) {
       userName = user.apodo;
     }
 
-    // Initialize AI Service with the loaded language and user name
-    aiServiceRef.current = new AIService(loadedLanguage, userName);
+    // Get assistant name if provided
+    const assistantName = user?.nombre_asistente;
+
+    // Initialize AI Service with the loaded language, user name, and assistant name
+    aiServiceRef.current = new AIService(loadedLanguage, userName, assistantName);
 
     // Start with personalized greeting
     setTimeout(() => {

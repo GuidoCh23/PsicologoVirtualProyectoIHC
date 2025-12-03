@@ -86,6 +86,9 @@ export interface Translations {
     deleteAllHistory: string;
     deleteDescription: string;
     assistantConfig: string;
+    assistantName: string;
+    assistantNameDescription: string;
+    assistantNamePlaceholder: string;
     voiceGender: string;
     voiceGenderDescription: string;
     male: string;
@@ -273,6 +276,9 @@ export const translations: Record<'es' | 'en', Translations> = {
       deleteAllHistory: 'Eliminar todo mi historial',
       deleteDescription: 'Borra permanentemente todas tus sesiones y tareas',
       assistantConfig: 'Configuración del Asistente',
+      assistantName: 'Nombre del asistente',
+      assistantNameDescription: 'Dale un nombre personalizado a tu asistente',
+      assistantNamePlaceholder: 'Ej: Luna, Max, Alex...',
       voiceGender: 'Género de la voz',
       voiceGenderDescription: 'Elige la voz del asistente',
       male: 'Masculina',
@@ -446,6 +452,9 @@ export const translations: Record<'es' | 'en', Translations> = {
       deleteAllHistory: 'Delete all my history',
       deleteDescription: 'Permanently delete all your sessions and tasks',
       assistantConfig: 'Assistant Configuration',
+      assistantName: 'Assistant name',
+      assistantNameDescription: 'Give your assistant a personalized name',
+      assistantNamePlaceholder: 'e.g: Luna, Max, Alex...',
       voiceGender: 'Voice gender',
       voiceGenderDescription: 'Choose the assistant\'s voice',
       male: 'Male',

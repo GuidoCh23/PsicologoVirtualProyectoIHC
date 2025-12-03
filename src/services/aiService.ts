@@ -230,7 +230,7 @@ export class AIService {
   private conversationHistory: AIMessage[] = [];
   private language: 'es' | 'en' = 'es';
 
-  constructor(language: 'es' | 'en' = 'es', userName?: string) {
+  constructor(language: 'es' | 'en' = 'es', userName?: string, assistantName?: string) {
     this.language = language;
 
     // Use hardcoded Groq API key
@@ -240,6 +240,15 @@ export class AIService {
     };
 
     let systemPrompt = language === 'es' ? SYSTEM_PROMPT : SYSTEM_PROMPT_EN;
+
+    // Add assistant name context if provided
+    if (assistantName) {
+      const assistantContext = language === 'es'
+        ? `\n\nTU NOMBRE:\nTe llamas ${assistantName}. Cuando sea apropiado, puedes presentarte con tu nombre para crear una conexión más personal con el usuario.`
+        : `\n\nYOUR NAME:\nYour name is ${assistantName}. When appropriate, you can introduce yourself by name to create a more personal connection with the user.`;
+
+      systemPrompt += assistantContext;
+    }
 
     // Add user context if name is provided
     if (userName) {
