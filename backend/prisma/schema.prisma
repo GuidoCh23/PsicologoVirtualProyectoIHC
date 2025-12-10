@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  password_hash     String
+  full_name         String
+  nickname          String?
+  created_at        DateTime  @default(now())
+  profile_picture_url String?
+  name_preference   String    @default("name") // 'name', 'nickname', 'none'
+  assistant_name    String    @default("Asistente")
+  
+  sessions          Session[]
+  tasks             Task[]
+
+  @@map("users")
+}
+
+model Session {
+  id                String    @id @default(uuid())
+  user_id           String
+  start_time        DateTime
+  duration_minutes  Int
+  moment_of_day     String    // 'morning', 'afternoon', 'night'
+  emotional_analysis Json?    // Stores the AI analysis object
+  exercises_completed Json?   // Stores array of completed exercises
+  user_feedback     Json?     // Stores feedback object
+  conversation_log  Json?     // Stores the chat history
+  
+  user              User      @relation(fields: [user_id], references: [id])
+  tasks             Task[]
+
+  @@map("sessions")
+}
+
+model Task {
+  id                String    @id @default(uuid())
+  user_id           String
+  session_id        String?
+  title             String
+  description       String?
+  frequency         String    @default("unique")
+  points            Int       @default(0)
+  status            String    @default("pending") // 'pending', 'completed', 'expired'
+  assigned_date     DateTime  @default(now())
+  due_date          DateTime?
+  completed_date    DateTime?
+
+  user              User      @relation(fields: [user_id], references: [id])
+  session           Session?  @relation(fields: [session_id], references: [id])
+
+  @@map("tasks")
+}
