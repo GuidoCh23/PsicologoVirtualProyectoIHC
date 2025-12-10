@@ -1,3 +1,5 @@
+import { API_URL } from '../config';
+
 interface AIMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
@@ -280,7 +282,7 @@ export class AIService {
     });
 
     try {
-      const response = await fetch('http://localhost:3000/api/ai/chat', {
+      const response = await fetch(`${API_URL}/api/ai/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
