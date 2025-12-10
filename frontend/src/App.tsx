@@ -11,6 +11,7 @@ import { Home, CheckSquare, BarChart3, Settings, MessageCircle } from 'lucide-re
 import { Session, Task } from './types';
 import { useTranslation } from './TranslationContext';
 import { useAuth } from './AuthContext';
+import { API_URL } from './config';
 
 type View = 'dashboard' | 'tasks' | 'history' | 'settings' | 'session' | 'summary';
 
@@ -51,7 +52,7 @@ export default function App() {
 
     try {
       // Fetch sessions
-      const sessionsRes = await fetch('http://localhost:3000/api/sessions', {
+      const sessionsRes = await fetch(`${API_URL}/api/sessions`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (sessionsRes.ok) {
@@ -61,7 +62,7 @@ export default function App() {
       }
 
       // Fetch tasks
-      const tasksRes = await fetch('http://localhost:3000/api/tasks', {
+      const tasksRes = await fetch(`${API_URL}/api/tasks`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (tasksRes.ok) {
@@ -177,7 +178,7 @@ export default function App() {
         }))
       };
 
-      const response = await fetch('http://localhost:3000/api/sessions', {
+      const response = await fetch(`${API_URL}/api/sessions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -204,7 +205,7 @@ export default function App() {
     if (!token) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}`, {
+      const response = await fetch(`${API_URL}/api/tasks/${taskId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -240,7 +241,7 @@ export default function App() {
     if (!token) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/api/sessions/${sessionId}`, {
+      const response = await fetch(`${API_URL}/api/sessions/${sessionId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
